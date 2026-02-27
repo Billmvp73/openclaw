@@ -1,6 +1,7 @@
 package ai.openclaw.android.gateway
 
 import android.util.Log
+import java.util.Base64
 import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -96,6 +97,8 @@ class GatewaySession(
     val endpoint: GatewayEndpoint,
     val token: String?,
     val password: String?,
+    val basicAuthUsername: String?,
+    val basicAuthPassword: String?,
     val options: GatewayConnectOptions,
     val tls: GatewayTlsParams?,
   )
@@ -110,8 +113,10 @@ class GatewaySession(
     password: String?,
     options: GatewayConnectOptions,
     tls: GatewayTlsParams? = null,
+    basicAuthUsername: String? = null,
+    basicAuthPassword: String? = null,
   ) {
-    desired = DesiredConnection(endpoint, token, password, options, tls)
+    desired = DesiredConnection(endpoint, token, password, basicAuthUsername, basicAuthPassword, options, tls)
     if (job == null) {
       job = scope.launch(Dispatchers.IO) { runLoop() }
     }
@@ -220,6 +225,8 @@ class GatewaySession(
     private val endpoint: GatewayEndpoint,
     private val token: String?,
     private val password: String?,
+    private val basicAuthUsername: String?,
+    private val basicAuthPassword: String?,
     private val options: GatewayConnectOptions,
     private val tls: GatewayTlsParams?,
   ) {
@@ -241,13 +248,23 @@ class GatewaySession(
     suspend fun connect() {
       val scheme = if (tls != null) "wss" else "ws"
       val url = "$scheme://${endpoint.host}:${endpoint.port}"
-      val request = Request.Builder().url(url).build()
+      val requestBuilder = Request.Builder().url(url)
+      buildBasicAuthHeader()?.let { requestBuilder.header("Authorization", it) }
+      val request = requestBuilder.build()
       socket = client.newWebSocket(request, Listener())
       try {
         connectDeferred.await()
       } catch (err: Throwable) {
         throw err
       }
+    }
+
+    private fun buildBasicAuthHeader(): String? {
+      val user = basicAuthUsername?.trim().orEmpty()
+      if (user.isEmpty()) return null
+      val pass = basicAuthPassword?.trim().orEmpty()
+      val encoded = Base64.getEncoder().encodeToString("$user:$pass".toByteArray(Charsets.UTF_8))
+      return "Basic $encoded"
     }
 
     suspend fun request(method: String, params: JsonElement?, timeoutMs: Long): RpcResponse {
@@ -622,7 +639,16 @@ class GatewaySession(
   }
 
   private suspend fun connectOnce(target: DesiredConnection) = withContext(Dispatchers.IO) {
-    val conn = Connection(target.endpoint, target.token, target.password, target.options, target.tls)
+    val conn =
+      Connection(
+        target.endpoint,
+        target.token,
+        target.password,
+        target.basicAuthUsername,
+        target.basicAuthPassword,
+        target.options,
+        target.tls,
+      )
     currentConnection = conn
     try {
       conn.connect()

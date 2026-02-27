@@ -76,6 +76,12 @@ class SecurePrefs(context: Context) {
   private val _gatewayToken = MutableStateFlow("")
   val gatewayToken: StateFlow<String> = _gatewayToken
 
+  private val _gatewayBasicUsername = MutableStateFlow(loadGatewayBasicUsername().orEmpty())
+  val gatewayBasicUsername: StateFlow<String> = _gatewayBasicUsername
+
+  private val _gatewayBasicPassword = MutableStateFlow(loadGatewayBasicPassword().orEmpty())
+  val gatewayBasicPassword: StateFlow<String> = _gatewayBasicPassword
+
   private val _onboardingCompleted =
     MutableStateFlow(plainPrefs.getBoolean("onboarding.completed", false))
   val onboardingCompleted: StateFlow<Boolean> = _onboardingCompleted
@@ -162,6 +168,18 @@ class SecurePrefs(context: Context) {
     saveGatewayPassword(value)
   }
 
+  fun setGatewayBasicUsername(value: String) {
+    val trimmed = value.trim()
+    securePrefs.edit { putString("gateway.manual.basic.username", trimmed) }
+    _gatewayBasicUsername.value = trimmed
+  }
+
+  fun setGatewayBasicPassword(value: String) {
+    val trimmed = value.trim()
+    securePrefs.edit { putString("gateway.manual.basic.password", trimmed) }
+    _gatewayBasicPassword.value = trimmed
+  }
+
   fun setOnboardingCompleted(value: Boolean) {
     plainPrefs.edit { putBoolean("onboarding.completed", value) }
     _onboardingCompleted.value = value
@@ -193,6 +211,16 @@ class SecurePrefs(context: Context) {
   fun loadGatewayPassword(): String? {
     val key = "gateway.password.${_instanceId.value}"
     val stored = securePrefs.getString(key, null)?.trim()
+    return stored?.takeIf { it.isNotEmpty() }
+  }
+
+  fun loadGatewayBasicUsername(): String? {
+    val stored = securePrefs.getString("gateway.manual.basic.username", null)?.trim()
+    return stored?.takeIf { it.isNotEmpty() }
+  }
+
+  fun loadGatewayBasicPassword(): String? {
+    val stored = securePrefs.getString("gateway.manual.basic.password", null)?.trim()
     return stored?.takeIf { it.isNotEmpty() }
   }
 

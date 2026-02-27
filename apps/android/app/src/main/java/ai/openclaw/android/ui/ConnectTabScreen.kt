@@ -63,6 +63,8 @@ fun ConnectTabScreen(viewModel: MainViewModel) {
   val manualTls by viewModel.manualTls.collectAsState()
   val manualEnabled by viewModel.manualEnabled.collectAsState()
   val gatewayToken by viewModel.gatewayToken.collectAsState()
+  val gatewayBasicUsername by viewModel.gatewayBasicUsername.collectAsState()
+  val gatewayBasicPassword by viewModel.gatewayBasicPassword.collectAsState()
   val pendingTrust by viewModel.pendingGatewayTrust.collectAsState()
 
   var advancedOpen by rememberSaveable { mutableStateOf(false) }
@@ -81,6 +83,8 @@ fun ConnectTabScreen(viewModel: MainViewModel) {
   var manualPortInput by rememberSaveable { mutableStateOf(manualPort.toString()) }
   var manualTlsInput by rememberSaveable { mutableStateOf(manualTls) }
   var passwordInput by rememberSaveable { mutableStateOf("") }
+  var basicAuthUsernameInput by rememberSaveable { mutableStateOf(gatewayBasicUsername) }
+  var basicAuthPasswordInput by rememberSaveable { mutableStateOf(gatewayBasicPassword) }
   var validationText by rememberSaveable { mutableStateOf<String?>(null) }
 
   if (pendingTrust != null) {
@@ -183,6 +187,8 @@ fun ConnectTabScreen(viewModel: MainViewModel) {
             manualTls = manualTlsInput,
             fallbackToken = gatewayToken,
             fallbackPassword = passwordInput,
+            fallbackBasicAuthUsername = basicAuthUsernameInput,
+            fallbackBasicAuthPassword = basicAuthPasswordInput,
           )
 
         if (config == null) {
@@ -204,6 +210,8 @@ fun ConnectTabScreen(viewModel: MainViewModel) {
           viewModel.setGatewayToken(config.token)
         }
         viewModel.setGatewayPassword(config.password)
+        viewModel.setGatewayBasicUsername(config.basicAuthUsername)
+        viewModel.setGatewayBasicPassword(config.basicAuthPassword)
         viewModel.connectManual()
       },
       modifier = Modifier.fillMaxWidth().height(52.dp),
@@ -386,6 +394,32 @@ fun ConnectTabScreen(viewModel: MainViewModel) {
             OutlinedTextField(
               value = passwordInput,
               onValueChange = { passwordInput = it },
+              placeholder = { Text("password", style = mobileBody, color = mobileTextTertiary) },
+              modifier = Modifier.fillMaxWidth(),
+              singleLine = true,
+              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
+              textStyle = mobileBody.copy(color = mobileText),
+              shape = RoundedCornerShape(14.dp),
+              colors = outlinedColors(),
+            )
+
+            Text("Basic auth username (optional)", style = mobileCaption1.copy(fontWeight = FontWeight.SemiBold), color = mobileTextSecondary)
+            OutlinedTextField(
+              value = basicAuthUsernameInput,
+              onValueChange = { basicAuthUsernameInput = it },
+              placeholder = { Text("username", style = mobileBody, color = mobileTextTertiary) },
+              modifier = Modifier.fillMaxWidth(),
+              singleLine = true,
+              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
+              textStyle = mobileBody.copy(color = mobileText),
+              shape = RoundedCornerShape(14.dp),
+              colors = outlinedColors(),
+            )
+
+            Text("Basic auth password (optional)", style = mobileCaption1.copy(fontWeight = FontWeight.SemiBold), color = mobileTextSecondary)
+            OutlinedTextField(
+              value = basicAuthPasswordInput,
+              onValueChange = { basicAuthPasswordInput = it },
               placeholder = { Text("password", style = mobileBody, color = mobileTextTertiary) },
               modifier = Modifier.fillMaxWidth(),
               singleLine = true,

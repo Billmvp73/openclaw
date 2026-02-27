@@ -20,6 +20,8 @@ internal data class GatewaySetupCode(
   val url: String,
   val token: String?,
   val password: String?,
+  val basicAuthUsername: String?,
+  val basicAuthPassword: String?,
 )
 
 internal data class GatewayConnectConfig(
@@ -28,6 +30,8 @@ internal data class GatewayConnectConfig(
   val tls: Boolean,
   val token: String,
   val password: String,
+  val basicAuthUsername: String,
+  val basicAuthPassword: String,
 )
 
 private val gatewaySetupJson = Json { ignoreUnknownKeys = true }
@@ -40,6 +44,8 @@ internal fun resolveGatewayConnectConfig(
   manualTls: Boolean,
   fallbackToken: String,
   fallbackPassword: String,
+  fallbackBasicAuthUsername: String,
+  fallbackBasicAuthPassword: String,
 ): GatewayConnectConfig? {
   if (useSetupCode) {
     val setup = decodeGatewaySetupCode(setupCode) ?: return null
@@ -50,6 +56,8 @@ internal fun resolveGatewayConnectConfig(
       tls = parsed.tls,
       token = setup.token ?: fallbackToken.trim(),
       password = setup.password ?: fallbackPassword.trim(),
+      basicAuthUsername = setup.basicAuthUsername ?: fallbackBasicAuthUsername.trim(),
+      basicAuthPassword = setup.basicAuthPassword ?: fallbackBasicAuthPassword.trim(),
     )
   }
 
@@ -61,6 +69,8 @@ internal fun resolveGatewayConnectConfig(
     tls = parsed.tls,
     token = fallbackToken.trim(),
     password = fallbackPassword.trim(),
+    basicAuthUsername = fallbackBasicAuthUsername.trim(),
+    basicAuthPassword = fallbackBasicAuthPassword.trim(),
   )
 }
 
@@ -106,7 +116,15 @@ internal fun decodeGatewaySetupCode(rawInput: String): GatewaySetupCode? {
     if (url.isEmpty()) return null
     val token = jsonField(obj, "token")
     val password = jsonField(obj, "password")
-    GatewaySetupCode(url = url, token = token, password = password)
+    val basicAuthUsername = jsonField(obj, "basicAuthUsername") ?: jsonField(obj, "basicAuthUser")
+    val basicAuthPassword = jsonField(obj, "basicAuthPassword") ?: jsonField(obj, "basicAuthPass")
+    GatewaySetupCode(
+      url = url,
+      token = token,
+      password = password,
+      basicAuthUsername = basicAuthUsername,
+      basicAuthPassword = basicAuthPassword,
+    )
   } catch (_: IllegalArgumentException) {
     null
   }

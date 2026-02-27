@@ -501,9 +501,13 @@ class NodeRuntime(context: Context) {
   val manualPort: StateFlow<Int> = prefs.manualPort
   val manualTls: StateFlow<Boolean> = prefs.manualTls
   val gatewayToken: StateFlow<String> = prefs.gatewayToken
+  val gatewayBasicUsername: StateFlow<String> = prefs.gatewayBasicUsername
+  val gatewayBasicPassword: StateFlow<String> = prefs.gatewayBasicPassword
   val onboardingCompleted: StateFlow<Boolean> = prefs.onboardingCompleted
   fun setGatewayToken(value: String) = prefs.setGatewayToken(value)
   fun setGatewayPassword(value: String) = prefs.setGatewayPassword(value)
+  fun setGatewayBasicUsername(value: String) = prefs.setGatewayBasicUsername(value)
+  fun setGatewayBasicPassword(value: String) = prefs.setGatewayBasicPassword(value)
   fun setOnboardingCompleted(value: Boolean) = prefs.setOnboardingCompleted(value)
   val lastDiscoveredStableId: StateFlow<String> = prefs.lastDiscoveredStableId
   val canvasDebugStatusEnabled: StateFlow<Boolean> = prefs.canvasDebugStatusEnabled
@@ -699,9 +703,27 @@ class NodeRuntime(context: Context) {
     updateStatus()
     val token = prefs.loadGatewayToken()
     val password = prefs.loadGatewayPassword()
+    val basicUser = prefs.loadGatewayBasicUsername()
+    val basicPass = prefs.loadGatewayBasicPassword()
     val tls = connectionManager.resolveTlsParams(endpoint)
-    operatorSession.connect(endpoint, token, password, connectionManager.buildOperatorConnectOptions(), tls)
-    nodeSession.connect(endpoint, token, password, connectionManager.buildNodeConnectOptions(), tls)
+    operatorSession.connect(
+      endpoint,
+      token,
+      password,
+      connectionManager.buildOperatorConnectOptions(),
+      tls,
+      basicAuthUsername = basicUser,
+      basicAuthPassword = basicPass,
+    )
+    nodeSession.connect(
+      endpoint,
+      token,
+      password,
+      connectionManager.buildNodeConnectOptions(),
+      tls,
+      basicAuthUsername = basicUser,
+      basicAuthPassword = basicPass,
+    )
     operatorSession.reconnect()
     nodeSession.reconnect()
   }
@@ -727,8 +749,26 @@ class NodeRuntime(context: Context) {
     updateStatus()
     val token = prefs.loadGatewayToken()
     val password = prefs.loadGatewayPassword()
-    operatorSession.connect(endpoint, token, password, connectionManager.buildOperatorConnectOptions(), tls)
-    nodeSession.connect(endpoint, token, password, connectionManager.buildNodeConnectOptions(), tls)
+    val basicUser = prefs.loadGatewayBasicUsername()
+    val basicPass = prefs.loadGatewayBasicPassword()
+    operatorSession.connect(
+      endpoint,
+      token,
+      password,
+      connectionManager.buildOperatorConnectOptions(),
+      tls,
+      basicAuthUsername = basicUser,
+      basicAuthPassword = basicPass,
+    )
+    nodeSession.connect(
+      endpoint,
+      token,
+      password,
+      connectionManager.buildNodeConnectOptions(),
+      tls,
+      basicAuthUsername = basicUser,
+      basicAuthPassword = basicPass,
+    )
   }
 
   fun acceptGatewayTrustPrompt() {

@@ -39,4 +39,14 @@ describe("resolveTranscriptPolicy", () => {
     expect(policy.sanitizeToolCallIds).toBe(false);
     expect(policy.toolCallIdMode).toBeUndefined();
   });
+
+  it("enables tool/result pairing repair for Bedrock Converse", () => {
+    const policy = resolveTranscriptPolicy({
+      provider: "amazon-bedrock",
+      modelId: "anthropic.claude-3-7-sonnet-20250219-v1:0",
+      modelApi: "bedrock-converse-stream",
+    });
+    expect(policy.repairToolUseResultPairing).toBe(true);
+    expect(policy.allowSyntheticToolResults).toBe(true);
+  });
 });

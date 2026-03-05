@@ -1,6 +1,6 @@
+import type { ToolCallIdMode } from "./tool-call-id.js";
 import { normalizeProviderId } from "./model-selection.js";
 import { isAntigravityClaude, isGoogleModelApi } from "./pi-embedded-helpers/google.js";
-import type { ToolCallIdMode } from "./tool-call-id.js";
 
 export type TranscriptSanitizeMode = "full" | "images-only";
 
@@ -62,6 +62,13 @@ function isAnthropicApi(modelApi?: string | null, provider?: string | null): boo
   return normalized === "anthropic";
 }
 
+function isBedrockApi(modelApi?: string | null, provider?: string | null): boolean {
+  if (modelApi === "bedrock-converse-stream") {
+    return true;
+  }
+  return normalizeProviderId(provider ?? "") === "amazon-bedrock";
+}
+
 function isMistralModel(params: { provider?: string | null; modelId?: string | null }): boolean {
   const provider = normalizeProviderId(params.provider ?? "");
   if (provider === "mistral") {
@@ -83,6 +90,7 @@ export function resolveTranscriptPolicy(params: {
   const modelId = params.modelId ?? "";
   const isGoogle = isGoogleModelApi(params.modelApi);
   const isAnthropic = isAnthropicApi(params.modelApi, provider);
+  const isBedrock = isBedrockApi(params.modelApi, provider);
   const isOpenAi = isOpenAiProvider(provider) || (!provider && isOpenAiApi(params.modelApi));
   const isMistral = isMistralModel({ provider, modelId });
   const isOpenRouterGemini =
@@ -109,7 +117,7 @@ export function resolveTranscriptPolicy(params: {
     : sanitizeToolCallIds
       ? "strict"
       : undefined;
-  const repairToolUseResultPairing = isGoogle || isAnthropic;
+  const repairToolUseResultPairing = isGoogle || isAnthropic || isBedrock;
   const sanitizeThoughtSignatures = isOpenRouterGemini
     ? { allowBase64Only: true, includeCamelCase: true }
     : undefined;
@@ -127,6 +135,6 @@ export function resolveTranscriptPolicy(params: {
     applyGoogleTurnOrdering: !isOpenAi && isGoogle,
     validateGeminiTurns: !isOpenAi && isGoogle,
     validateAnthropicTurns: !isOpenAi && isAnthropic,
-    allowSyntheticToolResults: !isOpenAi && (isGoogle || isAnthropic),
+    allowSyntheticToolResults: !isOpenAi && (isGoogle || isAnthropic || isBedrock),
   };
 }

@@ -124,6 +124,7 @@ function buildMessagingSection(params: {
   inlineButtonsEnabled: boolean;
   runtimeChannel?: string;
   messageToolHints?: string[];
+  productName: string;
 }) {
   if (params.isMinimal) {
     return [];
@@ -134,7 +135,7 @@ function buildMessagingSection(params: {
     "- Cross-session messaging → use sessions_send(sessionKey, message)",
     "- Sub-agent orchestration → use subagents(action=list|steer|kill)",
     `- Runtime-generated completion events may ask for a user update. Rewrite those in your normal assistant voice and send the update (do not forward raw internal metadata or default to ${SILENT_REPLY_TOKEN}).`,
-    "- Never use exec/curl for provider messaging; OpenClaw handles all routing internally.",
+    `- Never use exec/curl for provider messaging; ${params.productName || "the platform"} handles all routing internally.`,
     params.availableTools.has("message")
       ? [
           "",
@@ -168,9 +169,14 @@ function buildVoiceSection(params: { isMinimal: boolean; ttsHint?: string }) {
   return ["## Voice (TTS)", hint, ""];
 }
 
-function buildDocsSection(params: { docsPath?: string; isMinimal: boolean; readToolName: string }) {
+function buildDocsSection(params: {
+  docsPath?: string;
+  isMinimal: boolean;
+  readToolName: string;
+  isCustomBranding: boolean;
+}) {
   const docsPath = params.docsPath?.trim();
-  if (!docsPath || params.isMinimal) {
+  if (!docsPath || params.isMinimal || params.isCustomBranding) {
     return [];
   }
   return [
@@ -233,8 +239,18 @@ export function buildAgentSystemPrompt(params: {
     channel: string;
   };
   memoryCitationsMode?: MemoryCitationsMode;
+  /**
+   * Optional product name for white-label branding.
+   * - undefined / "OpenClaw": default behavior, all branding sections shown
+   * - custom non-empty string: replace product name; CLI/Docs/Self-Update sections omitted
+   * - "": omit product name entirely; same omissions apply
+   */
+  productName?: string;
 }) {
   const acpEnabled = params.acpEnabled !== false;
+  const effectiveProductName = params.productName ?? "OpenClaw";
+  const hasProductName = effectiveProductName.length > 0;
+  const isCustomBranding = effectiveProductName !== "OpenClaw";
   const sandboxedRuntime = params.sandboxInfo?.enabled === true;
   const acpSpawnRuntimeEnabled = acpEnabled && !sandboxedRuntime;
   const coreToolSummaries: Record<string, string> = {
@@ -255,10 +271,10 @@ export function buildAgentSystemPrompt(params: {
     nodes: "List/describe/notify/camera/screen on paired nodes",
     cron: "Manage cron jobs and wake events (use for reminders; when scheduling a reminder, write the systemEvent text as something that will read like a reminder when it fires, and mention that it is a reminder depending on the time gap between setting and firing; include recent context in reminder text if appropriate)",
     message: "Send messages and channel actions",
-    gateway: "Restart, apply config, or run updates on the running OpenClaw process",
+    gateway: `Restart, apply config, or run updates on the running ${effectiveProductName ? effectiveProductName + " " : ""}process`,
     agents_list: acpSpawnRuntimeEnabled
-      ? 'List OpenClaw agent ids allowed for sessions_spawn when runtime="subagent" (not ACP harness ids)'
-      : "List OpenClaw agent ids allowed for sessions_spawn",
+      ? `List ${effectiveProductName ? effectiveProductName + " " : ""}agent ids allowed for sessions_spawn when runtime="subagent" (not ACP harness ids)`
+      : `List ${effectiveProductName ? effectiveProductName + " " : ""}agent ids allowed for sessions_spawn`,
     sessions_list: "List other sessions (incl. sub-agents) with filters/last",
     sessions_history: "Fetch history for another session/sub-agent",
     sessions_send: "Send a message to another session/sub-agent",
@@ -411,16 +427,21 @@ export function buildAgentSystemPrompt(params: {
     docsPath: params.docsPath,
     isMinimal,
     readToolName,
+    isCustomBranding,
   });
   const workspaceNotes = (params.workspaceNotes ?? []).map((note) => note.trim()).filter(Boolean);
 
   // For "none" mode, return just the basic identity line
   if (promptMode === "none") {
-    return "You are a personal assistant running inside OpenClaw.";
+    return hasProductName
+      ? `You are a personal assistant running inside ${effectiveProductName}.`
+      : "You are a personal assistant.";
   }
 
   const lines = [
-    "You are a personal assistant running inside OpenClaw.",
+    hasProductName
+      ? `You are a personal assistant running inside ${effectiveProductName}.`
+      : "You are a personal assistant.",
     "",
     "## Tooling",
     "Tool availability (filtered by policy):",
@@ -435,7 +456,7 @@ export function buildAgentSystemPrompt(params: {
           "- apply_patch: apply multi-file patches",
           `- ${execToolName}: run shell commands (supports background via yieldMs/background)`,
           `- ${processToolName}: manage background exec sessions`,
-          "- browser: control OpenClaw's dedicated browser",
+          `- browser: control ${effectiveProductName ? effectiveProductName + "'s" : "the"} dedicated browser`,
           "- canvas: present/eval/snapshot the Canvas",
           "- nodes: list/describe/notify/camera/screen on paired nodes",
           "- cron: manage cron jobs and wake events (use for reminders; when scheduling a reminder, write the systemEvent text as something that will read like a reminder when it fires, and mention that it is a reminder depending on the time gap between setting and firing; include recent context in reminder text if appropriate)",
@@ -469,29 +490,35 @@ export function buildAgentSystemPrompt(params: {
     "When approvals are required, preserve and show the full command/script exactly as provided (including chained operators like &&, ||, |, ;, or multiline shells) so the user can approve what will actually run.",
     "",
     ...safetySection,
-    "## OpenClaw CLI Quick Reference",
-    "OpenClaw is controlled via subcommands. Do not invent commands.",
-    "To manage the Gateway daemon service (start/stop/restart):",
-    "- openclaw gateway status",
-    "- openclaw gateway start",
-    "- openclaw gateway stop",
-    "- openclaw gateway restart",
-    "If unsure, ask the user to run `openclaw help` (or `openclaw gateway --help`) and paste the output.",
-    "",
+    ...(!isCustomBranding
+      ? [
+          "## OpenClaw CLI Quick Reference",
+          "OpenClaw is controlled via subcommands. Do not invent commands.",
+          "To manage the Gateway daemon service (start/stop/restart):",
+          "- openclaw gateway status",
+          "- openclaw gateway start",
+          "- openclaw gateway stop",
+          "- openclaw gateway restart",
+          "If unsure, ask the user to run `openclaw help` (or `openclaw gateway --help`) and paste the output.",
+          "",
+        ]
+      : []),
     ...skillsSection,
     ...memorySection,
     // Skip self-update for subagent/none modes
-    hasGateway && !isMinimal ? "## OpenClaw Self-Update" : "",
-    hasGateway && !isMinimal
+    ...(hasGateway && !isMinimal && !isCustomBranding
       ? [
-          "Get Updates (self-update) is ONLY allowed when the user explicitly asks for it.",
-          "Do not run config.apply or update.run unless the user explicitly requests an update or config change; if it's not explicit, ask first.",
-          "Use config.schema.lookup with a specific dot path to inspect only the relevant config subtree before making config changes or answering config-field questions; avoid guessing field names/types.",
-          "Actions: config.schema.lookup, config.get, config.apply (validate + write full config, then restart), config.patch (partial update, merges with existing), update.run (update deps or git, then restart).",
-          "After restart, OpenClaw pings the last active session automatically.",
-        ].join("\n")
-      : "",
-    hasGateway && !isMinimal ? "" : "",
+          "## OpenClaw Self-Update",
+          [
+            "Get Updates (self-update) is ONLY allowed when the user explicitly asks for it.",
+            "Do not run config.apply or update.run unless the user explicitly requests an update or config change; if it's not explicit, ask first.",
+            "Use config.schema.lookup with a specific dot path to inspect only the relevant config subtree before making config changes or answering config-field questions; avoid guessing field names/types.",
+            "Actions: config.schema.lookup, config.get, config.apply (validate + write full config, then restart), config.patch (partial update, merges with existing), update.run (update deps or git, then restart).",
+            "After restart, OpenClaw pings the last active session automatically.",
+          ].join("\n"),
+          "",
+        ]
+      : []),
     "",
     // Skip model aliases for subagent/none modes
     params.modelAliasLines && params.modelAliasLines.length > 0 && !isMinimal
@@ -566,7 +593,7 @@ export function buildAgentSystemPrompt(params: {
       userTimezone,
     }),
     "## Workspace Files (injected)",
-    "These user-editable files are loaded by OpenClaw and included below in Project Context.",
+    `These user-editable files are loaded${effectiveProductName ? " by " + effectiveProductName : ""} and included below in Project Context.`,
     "",
     ...buildReplyTagsSection(isMinimal),
     ...buildMessagingSection({
@@ -576,6 +603,7 @@ export function buildAgentSystemPrompt(params: {
       inlineButtonsEnabled,
       runtimeChannel,
       messageToolHints: params.messageToolHints,
+      productName: effectiveProductName,
     }),
     ...buildVoiceSection({ isMinimal, ttsHint: params.ttsHint }),
   ];
@@ -673,7 +701,7 @@ export function buildAgentSystemPrompt(params: {
       heartbeatPromptLine,
       "If you receive a heartbeat poll (a user message matching the heartbeat prompt above), and there is nothing that needs attention, reply exactly:",
       "HEARTBEAT_OK",
-      'OpenClaw treats a leading/trailing "HEARTBEAT_OK" as a heartbeat ack (and may discard it).',
+      `${effectiveProductName || "The system"} treats a leading/trailing "HEARTBEAT_OK" as a heartbeat ack (and may discard it).`,
       'If something needs attention, do NOT include "HEARTBEAT_OK"; reply with the alert text instead.',
       "",
     );

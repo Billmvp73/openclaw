@@ -282,6 +282,11 @@ export type AgentDefaultsConfig = {
     /** Gateway timeout in ms for sub-agent announce delivery calls (default: 60000). */
     announceTimeoutMs?: number;
   };
+  /** Optional white-label branding for the system prompt. */
+  branding?: {
+    /** Custom product name shown in the system prompt. Set to "" to remove branding entirely. Defaults to "OpenClaw". */
+    productName?: string;
+  };
   /** Optional sandbox settings for non-main sessions. */
   sandbox?: AgentSandboxConfig;
 };

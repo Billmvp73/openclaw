@@ -493,4 +493,30 @@ describe("resolveGatewayStateDir", () => {
     const env = { OPENCLAW_STATE_DIR: "C:\\State\\openclaw" };
     expect(resolveGatewayStateDir(env)).toBe("C:\\State\\openclaw");
   });
+
+  it("uses OPENCLAW_HOME as HOME override for state dir (consistent with config/paths.ts)", () => {
+    const env = { HOME: "/Users/test", OPENCLAW_HOME: "/srv/openclaw-home" };
+    expect(resolveGatewayStateDir(env)).toBe(path.join("/srv/openclaw-home", ".openclaw"));
+  });
+
+  it("prefers OPENCLAW_HOME over HOME when deriving state dir", () => {
+    const env = { HOME: "/Users/other", OPENCLAW_HOME: "/srv/openclaw-home" };
+    expect(resolveGatewayStateDir(env)).toBe(path.join("/srv/openclaw-home", ".openclaw"));
+  });
+
+  it("expands ~ in OPENCLAW_HOME relative to HOME", () => {
+    const env = { HOME: "/Users/test", OPENCLAW_HOME: "~/custom-home" };
+    expect(resolveGatewayStateDir(env)).toBe(
+      path.join(path.resolve("/Users/test/custom-home"), ".openclaw"),
+    );
+  });
+
+  it("OPENCLAW_STATE_DIR takes precedence over OPENCLAW_HOME", () => {
+    const env = {
+      HOME: "/Users/test",
+      OPENCLAW_HOME: "/srv/openclaw-home",
+      OPENCLAW_STATE_DIR: "~/.themachine",
+    };
+    expect(resolveGatewayStateDir(env)).toBe(path.resolve("/Users/test/.themachine"));
+  });
 });

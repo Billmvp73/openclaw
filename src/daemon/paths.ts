@@ -31,12 +31,20 @@ export function resolveUserPathWithHome(input: string, home?: string): string {
 }
 
 export function resolveGatewayStateDir(env: Record<string, string | undefined>): string {
+  // OPENCLAW_STATE_DIR is the primary override — use it directly as the state dir path.
+  // White-label deployments (e.g. TheMachine) should set OPENCLAW_STATE_DIR=~/.themachine.
   const override = env.OPENCLAW_STATE_DIR?.trim();
   if (override) {
     const home = override.startsWith("~") ? resolveHomeDir(env) : undefined;
     return resolveUserPathWithHome(override, home);
   }
-  const home = resolveHomeDir(env);
+  const systemHome = resolveHomeDir(env);
   const suffix = resolveGatewayProfileSuffix(env.OPENCLAW_PROFILE);
-  return path.join(home, `.openclaw${suffix}`);
+  // Respect OPENCLAW_HOME as a HOME directory override (consistent with config/paths.ts).
+  // With OPENCLAW_HOME=/srv/myapp, state dir becomes /srv/myapp/.openclaw.
+  const openclawHome = env.OPENCLAW_HOME?.trim();
+  const effectiveHome = openclawHome
+    ? resolveUserPathWithHome(openclawHome, systemHome)
+    : systemHome;
+  return path.join(effectiveHome, `.openclaw${suffix}`);
 }

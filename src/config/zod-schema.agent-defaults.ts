@@ -187,6 +187,12 @@ export const AgentDefaultsSchema = z
       })
       .strict()
       .optional(),
+    branding: z
+      .object({
+        productName: z.string().optional(),
+      })
+      .strict()
+      .optional(),
     sandbox: AgentSandboxSchema,
   })
   .strict()

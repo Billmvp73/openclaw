@@ -30,6 +30,8 @@ export type SystemPromptRuntimeParams = {
   userTimezone: string;
   userTime?: string;
   userTimeFormat?: ResolvedTimeFormat;
+  /** Resolved product name for white-label branding (undefined = use default "OpenClaw"). */
+  productName?: string;
 };
 
 export function buildSystemPromptParams(params: {
@@ -47,6 +49,7 @@ export function buildSystemPromptParams(params: {
   const userTimezone = resolveUserTimezone(params.config?.agents?.defaults?.userTimezone);
   const userTimeFormat = resolveUserTimeFormat(params.config?.agents?.defaults?.timeFormat);
   const userTime = formatUserTime(new Date(), userTimezone, userTimeFormat);
+  const productName = params.config?.agents?.defaults?.branding?.productName;
   return {
     runtimeInfo: {
       agentId: params.agentId,
@@ -56,6 +59,7 @@ export function buildSystemPromptParams(params: {
     userTimezone,
     userTime,
     userTimeFormat,
+    productName,
   };
 }
 

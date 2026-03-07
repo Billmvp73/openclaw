@@ -89,7 +89,9 @@ export function resolveSandboxDockerConfig(params: {
     ? { ...globalDocker?.ulimits, ...agentDocker.ulimits }
     : globalDocker?.ulimits;
 
-  const binds = [...(globalDocker?.binds ?? []), ...(agentDocker?.binds ?? [])];
+  // Treat explicit agent `binds` (including empty array) as a full override of global binds,
+  // matching the browser binds semantics. This lets agents opt out of global mounts.
+  const binds = agentDocker?.binds !== undefined ? agentDocker.binds : (globalDocker?.binds ?? []);
 
   return {
     image: agentDocker?.image ?? globalDocker?.image ?? DEFAULT_SANDBOX_IMAGE,

@@ -21,7 +21,13 @@ export const isNixMode = resolveIsNixMode();
 const LEGACY_STATE_DIRNAMES = [".clawdbot", ".moldbot", ".moltbot"] as const;
 const NEW_STATE_DIRNAME = ".openclaw";
 const CONFIG_FILENAME = "openclaw.json";
+const BRANDED_CONFIG_FILENAMES = ["themachine.json"] as const;
 const LEGACY_CONFIG_FILENAMES = ["clawdbot.json", "moldbot.json", "moltbot.json"] as const;
+const ALL_CONFIG_FILENAMES = [
+  CONFIG_FILENAME,
+  ...BRANDED_CONFIG_FILENAMES,
+  ...LEGACY_CONFIG_FILENAMES,
+] as const;
 
 function resolveDefaultHomeDir(): string {
   return resolveRequiredHomeDir(process.env, os.homedir);
@@ -168,6 +174,7 @@ export function resolveConfigPath(
   }
   const stateOverride = env.OPENCLAW_STATE_DIR?.trim();
   const candidates = [
+    ...BRANDED_CONFIG_FILENAMES.map((name) => path.join(stateDir, name)),
     path.join(stateDir, CONFIG_FILENAME),
     ...LEGACY_CONFIG_FILENAMES.map((name) => path.join(stateDir, name)),
   ];
@@ -211,14 +218,16 @@ export function resolveDefaultConfigCandidates(
   const openclawStateDir = env.OPENCLAW_STATE_DIR?.trim() || env.CLAWDBOT_STATE_DIR?.trim();
   if (openclawStateDir) {
     const resolved = resolveUserPath(openclawStateDir, env, effectiveHomedir);
-    candidates.push(path.join(resolved, CONFIG_FILENAME));
-    candidates.push(...LEGACY_CONFIG_FILENAMES.map((name) => path.join(resolved, name)));
+    for (const name of ALL_CONFIG_FILENAMES) {
+      candidates.push(path.join(resolved, name));
+    }
   }
 
   const defaultDirs = [newStateDir(effectiveHomedir), ...legacyStateDirs(effectiveHomedir)];
   for (const dir of defaultDirs) {
-    candidates.push(path.join(dir, CONFIG_FILENAME));
-    candidates.push(...LEGACY_CONFIG_FILENAMES.map((name) => path.join(dir, name)));
+    for (const name of ALL_CONFIG_FILENAMES) {
+      candidates.push(path.join(dir, name));
+    }
   }
   return candidates;
 }

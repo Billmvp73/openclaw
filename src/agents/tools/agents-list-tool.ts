@@ -22,12 +22,12 @@ export function createAgentsListTool(opts?: {
   agentSessionKey?: string;
   /** Explicit agent ID override for cron/hook sessions. */
   requesterAgentIdOverride?: string;
+  productName?: string;
 }): AnyAgentTool {
   return {
     label: "Agents",
     name: "agents_list",
-    description:
-      'List OpenClaw agent ids you can target with `sessions_spawn` when `runtime="subagent"` (based on subagent allowlists).',
+    description: `List ${opts?.productName ?? "OpenClaw"} agent ids you can target with \`sessions_spawn\` when \`runtime="subagent"\` (based on subagent allowlists).`,
     parameters: AgentsListToolSchema,
     execute: async () => {
       const cfg = loadConfig();

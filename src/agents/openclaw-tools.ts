@@ -130,6 +130,7 @@ export function createOpenClawTools(options?: {
       sandboxBridgeUrl: options?.sandboxBrowserBridgeUrl,
       allowHostControl: options?.allowHostBrowserControl,
       agentSessionKey: options?.agentSessionKey,
+      productName: options?.config?.agents?.defaults?.branding?.productName,
     }),
     createCanvasTool({ config: options?.config }),
     createNodesTool({
@@ -157,6 +158,7 @@ export function createOpenClawTools(options?: {
     createAgentsListTool({
       agentSessionKey: options?.agentSessionKey,
       requesterAgentIdOverride: options?.requesterAgentIdOverride,
+      productName: options?.config?.agents?.defaults?.branding?.productName,
     }),
     createSessionsListTool({
       agentSessionKey: options?.agentSessionKey,

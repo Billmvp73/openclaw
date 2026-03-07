@@ -22,7 +22,7 @@ function setProcessTitleForCommand(actionCommand: Command) {
   if (!name || name === cliName) {
     return;
   }
-  process.title = `${cliName}-${name}`;
+  process.title = `${process.env.OPENCLAW_PROCESS_NAME || cliName}-${name}`;
 }
 
 // Commands that need channel plugins loaded

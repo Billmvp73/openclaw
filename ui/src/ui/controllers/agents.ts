@@ -1,5 +1,5 @@
 import type { GatewayBrowserClient } from "../gateway.ts";
-import type { AgentsListResult, ToolsCatalogResult } from "../types.ts";
+import type { AgentsListResult, ToolsCatalogResult, RoutingListResult } from "../types.ts";
 import { saveConfig } from "./config.ts";
 import type { ConfigState } from "./config.ts";
 
@@ -13,6 +13,10 @@ export type AgentsState = {
   toolsCatalogLoading: boolean;
   toolsCatalogError: string | null;
   toolsCatalogResult: ToolsCatalogResult | null;
+  /** Binding entries from routing.list — channel-per-agent routing config. */
+  routeBindings: RoutingListResult["bindings"] | null;
+  routeBindingsLoading: boolean;
+  routeBindingsError: string | null;
 };
 
 export type AgentsConfigSaveState = AgentsState & ConfigState;
@@ -73,5 +77,33 @@ export async function saveAgentsConfig(state: AgentsConfigSaveState) {
   await loadAgents(state);
   if (selectedBefore && state.agentsList?.agents.some((entry) => entry.id === selectedBefore)) {
     state.agentsSelectedId = selectedBefore;
+  }
+}
+
+/**
+ * loadRouteBindings — Fetches channel-to-agent bindings from routing.list.
+ * ZZ-20260311-005: Used to display per-agent channel bindings in the agents UI.
+ */
+export async function loadRouteBindings(state: AgentsState) {
+  if (!state.client || !state.connected) {
+    return;
+  }
+  if (state.routeBindingsLoading) {
+    return;
+  }
+  state.routeBindingsLoading = true;
+  state.routeBindingsError = null;
+  try {
+    const res = await state.client.request<{ bindings: AgentsState["routeBindings"] }>(
+      "routing.list",
+      {},
+    );
+    if (res) {
+      state.routeBindings = res.bindings ?? [];
+    }
+  } catch (err) {
+    state.routeBindingsError = String(err);
+  } finally {
+    state.routeBindingsLoading = false;
   }
 }

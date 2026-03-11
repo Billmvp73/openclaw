@@ -129,3 +129,6 @@ export type ChatEvent = SchemaType<"ChatEvent">;
 export type UpdateRunParams = SchemaType<"UpdateRunParams">;
 export type TickEvent = SchemaType<"TickEvent">;
 export type ShutdownEvent = SchemaType<"ShutdownEvent">;
+export type RoutingListParams = SchemaType<"RoutingListParams">;
+export type RoutingListResult = SchemaType<"RoutingListResult">;
+export type RouteBindingEntry = SchemaType<"RouteBindingEntry">;

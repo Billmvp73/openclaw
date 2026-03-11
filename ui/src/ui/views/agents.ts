@@ -6,6 +6,7 @@ import type {
   ChannelsStatusSnapshot,
   CronJob,
   CronStatus,
+  RouteBindingEntry,
   SkillStatusReport,
   ToolsCatalogResult,
 } from "../types.ts";
@@ -45,6 +46,9 @@ export type AgentsProps = {
   channelsError: string | null;
   channelsSnapshot: ChannelsStatusSnapshot | null;
   channelsLastSuccess: number | null;
+  /** Channel-to-agent bindings from routing.list. */
+  routeBindings: RouteBindingEntry[] | null;
+  routeBindingsLoading: boolean;
   cronLoading: boolean;
   cronStatus: CronStatus | null;
   cronJobs: CronJob[];
@@ -250,6 +254,7 @@ export function renderAgents(props: AgentsProps) {
                 ${
                   props.activePanel === "channels"
                     ? renderAgentChannels({
+                        agentId: selectedAgent.id,
                         context: buildAgentContext(
                           selectedAgent,
                           props.configForm,
@@ -262,6 +267,8 @@ export function renderAgents(props: AgentsProps) {
                         loading: props.channelsLoading,
                         error: props.channelsError,
                         lastSuccess: props.channelsLastSuccess,
+                        routeBindings: props.routeBindings,
+                        routeBindingsLoading: props.routeBindingsLoading,
                         onRefresh: props.onChannelsRefresh,
                       })
                     : nothing

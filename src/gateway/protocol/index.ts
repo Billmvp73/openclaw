@@ -248,6 +248,10 @@ import {
   WizardStatusResultSchema,
   type WizardStep,
   WizardStepSchema,
+  type RoutingListParams,
+  RoutingListParamsSchema,
+  type RoutingListResult,
+  type RouteBindingEntry,
 } from "./schema.js";
 
 const ajv = new (AjvPkg as unknown as new (opts?: object) => import("ajv").default)({
@@ -420,6 +424,7 @@ export const validateUpdateRunParams = ajv.compile<UpdateRunParams>(UpdateRunPar
 export const validateWebLoginStartParams =
   ajv.compile<WebLoginStartParams>(WebLoginStartParamsSchema);
 export const validateWebLoginWaitParams = ajv.compile<WebLoginWaitParams>(WebLoginWaitParamsSchema);
+export const validateRoutingListParams = ajv.compile<RoutingListParams>(RoutingListParamsSchema);
 
 export function formatValidationErrors(errors: ErrorObject[] | null | undefined) {
   if (!errors?.length) {
@@ -669,4 +674,7 @@ export type {
   PollParams,
   UpdateRunParams,
   ChatInjectParams,
+  RoutingListParams,
+  RoutingListResult,
+  RouteBindingEntry,
 };

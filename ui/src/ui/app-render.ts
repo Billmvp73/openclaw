@@ -565,6 +565,8 @@ export function renderApp(state: AppViewState) {
                 channelsError: state.channelsError,
                 channelsSnapshot: state.channelsSnapshot,
                 channelsLastSuccess: state.channelsLastSuccess,
+                routeBindings: state.routeBindings,
+                routeBindingsLoading: state.routeBindingsLoading,
                 cronLoading: state.cronLoading,
                 cronStatus: state.cronStatus,
                 cronJobs: state.cronJobs,

@@ -22,6 +22,7 @@ import type {
   LogLevel,
   NostrProfile,
   PresenceEntry,
+  RouteBindingEntry,
   SessionsUsageResult,
   CostUsageSummary,
   SessionUsageTimeSeries,
@@ -132,6 +133,9 @@ export type AppViewState = {
   toolsCatalogLoading: boolean;
   toolsCatalogError: string | null;
   toolsCatalogResult: ToolsCatalogResult | null;
+  routeBindings: RouteBindingEntry[] | null;
+  routeBindingsLoading: boolean;
+  routeBindingsError: string | null;
   agentsPanel: "overview" | "files" | "tools" | "skills" | "channels" | "cron";
   agentFilesLoading: boolean;
   agentFilesError: string | null;

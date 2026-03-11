@@ -132,6 +132,11 @@ import {
 } from "./nodes.js";
 import { PushTestParamsSchema, PushTestResultSchema } from "./push.js";
 import {
+  RouteBindingEntrySchema,
+  RoutingListParamsSchema,
+  RoutingListResultSchema,
+} from "./routing.js";
+import {
   SecretsReloadParamsSchema,
   SecretsResolveAssignmentSchema,
   SecretsResolveParamsSchema,
@@ -296,6 +301,9 @@ export const ProtocolSchemas = {
   UpdateRunParams: UpdateRunParamsSchema,
   TickEvent: TickEventSchema,
   ShutdownEvent: ShutdownEventSchema,
+  RoutingListParams: RoutingListParamsSchema,
+  RoutingListResult: RoutingListResultSchema,
+  RouteBindingEntry: RouteBindingEntrySchema,
 } satisfies Record<string, TSchema>;
 
 export const PROTOCOL_VERSION = 3 as const;

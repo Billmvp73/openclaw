@@ -625,3 +625,19 @@ export type LogEntry = {
   message?: string | null;
   meta?: Record<string, unknown> | null;
 };
+
+/** A single channel-to-agent binding as returned by routing.list. */
+export type RouteBindingEntry = {
+  agentId: string;
+  channel: string;
+  peerKind?: string;
+  peerId?: string;
+  guildId?: string;
+  comment?: string;
+  type: string;
+};
+
+/** Result of routing.list Gateway method. */
+export type RoutingListResult = {
+  bindings: RouteBindingEntry[];
+};

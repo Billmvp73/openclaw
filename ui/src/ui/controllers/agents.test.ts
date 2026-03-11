@@ -16,6 +16,9 @@ function createState(): { state: AgentsState; request: ReturnType<typeof vi.fn> 
     toolsCatalogLoading: false,
     toolsCatalogError: null,
     toolsCatalogResult: null,
+    routeBindings: null,
+    routeBindingsLoading: false,
+    routeBindingsError: null,
   };
   return { state, request };
 }

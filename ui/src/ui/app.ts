@@ -225,6 +225,9 @@ export class OpenClawApp extends LitElement {
   @state() toolsCatalogLoading = false;
   @state() toolsCatalogError: string | null = null;
   @state() toolsCatalogResult: ToolsCatalogResult | null = null;
+  @state() routeBindings: import("./types.js").RouteBindingEntry[] | null = null;
+  @state() routeBindingsLoading = false;
+  @state() routeBindingsError: string | null = null;
   @state() agentsPanel: "overview" | "files" | "tools" | "skills" | "channels" | "cron" =
     "overview";
   @state() agentFilesLoading = false;

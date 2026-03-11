@@ -13,6 +13,7 @@ import type {
   ChannelsStatusSnapshot,
   CronJob,
   CronStatus,
+  RouteBindingEntry,
 } from "../types.ts";
 import { formatBytes, type AgentContext } from "./agents-utils.ts";
 import { resolveChannelExtras as resolveChannelExtrasFromConfig } from "./channel-config-extras.ts";
@@ -129,13 +130,72 @@ function summarizeChannelAccounts(accounts: ChannelAccountSnapshot[]) {
   };
 }
 
+/**
+ * renderAgentRouteBindings — Shows channel-to-agent bindings for the selected agent.
+ * ZZ-20260311-005: Discord channel-per-agent binding display in Gateway UI.
+ */
+function renderAgentRouteBindings(params: {
+  agentId: string;
+  routeBindings: RouteBindingEntry[] | null;
+  routeBindingsLoading: boolean;
+}) {
+  const agentBindings = (params.routeBindings ?? []).filter((b) => b.agentId === params.agentId);
+
+  return html`
+    <section class="card" style="margin-top: 16px;">
+      <div class="card-title">Channel Bindings</div>
+      <div class="card-sub">
+        Discord (and other channel) routing rules bound to this agent. Read-only — edit via CLI
+        config.
+      </div>
+      ${
+        params.routeBindingsLoading
+          ? html`
+              <div class="muted" style="margin-top: 12px">Loading bindings…</div>
+            `
+          : agentBindings.length === 0
+            ? html`
+                <div class="muted" style="margin-top: 12px">No channel bindings for this agent.</div>
+              `
+            : html`
+                <div class="list" style="margin-top: 12px;">
+                  ${agentBindings.map((b) => {
+                    const peerId = b.peerId ?? "–";
+                    const peerKind = b.peerKind ?? "–";
+                    const channelLabel = b.channel ?? "–";
+                    const typeLabel = b.type === "acp" ? "ACP" : "route";
+                    return html`
+                      <div class="list-item">
+                        <div class="list-main">
+                          <div class="list-title mono">${peerId}</div>
+                          <div class="list-sub">
+                            ${channelLabel} · ${peerKind} · ${typeLabel}
+                          </div>
+                          ${b.comment ? html`<div class="list-sub muted">${b.comment}</div>` : nothing}
+                        </div>
+                        <div class="list-meta">
+                          ${b.guildId ? html`<div>guild: <span class="mono">${b.guildId}</span></div>` : nothing}
+                        </div>
+                      </div>
+                    `;
+                  })}
+                </div>
+              `
+      }
+    </section>
+  `;
+}
+
 export function renderAgentChannels(params: {
+  agentId: string;
   context: AgentContext;
   configForm: Record<string, unknown> | null;
   snapshot: ChannelsStatusSnapshot | null;
   loading: boolean;
   error: string | null;
   lastSuccess: number | null;
+  routeBindings: RouteBindingEntry[] | null;
+  routeBindingsLoading: boolean;
   onRefresh: () => void;
 }) {
   const entries = resolveChannelEntries(params.snapshot);
@@ -217,6 +277,11 @@ export function renderAgentChannels(params: {
         }
       </section>
     </section>
+    ${renderAgentRouteBindings({
+      agentId: params.agentId,
+      routeBindings: params.routeBindings,
+      routeBindingsLoading: params.routeBindingsLoading,
+    })}
   `;
 }
 
